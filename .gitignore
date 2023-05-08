@@ -1,0 +1,28 @@
+# Ignore .terraform directories
+**/.terraform/*
+
+# Ignore any crash log files
+crash.log
+
+# Ignore any .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Ignore any .tfplan files
+*.tfplan
+
+# Ignore .terraformrc since it usually contains secrets
+.terraformrc
+
+# Ignore any override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore any .terraform.lock.hcl files
+*.lock.hcl
+
+credentials
+
+.git

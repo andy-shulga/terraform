@@ -1,0 +1,6 @@
+  #!/bin/bash
+    sudo yum update -y
+    sudo yum install -y httpd
+    sudo service httpd start
+    wget https://shulga-andrii-cv.s3.eu-west-2.amazonaws.com/index.html
+    mv index.html /var/www/html/
