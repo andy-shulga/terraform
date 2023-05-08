@@ -23,6 +23,8 @@ override.tf.json
 # Ignore any .terraform.lock.hcl files
 *.lock.hcl
 
+# Ignire credentials file
 credentials
 
+# Ignore .git file
 .git
