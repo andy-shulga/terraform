@@ -12,3 +12,7 @@ data "aws_ami" "ami_name" {
     values = ["amzn2-ami-kernel-*"]
   }
 }
+
+data "aws_region" "current" {}
+
+data "aws_availability_zones" "available" {}

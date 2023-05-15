@@ -7,23 +7,104 @@
 # Owner Andy Shulga
 ####################################
 
+# Creare an Launch Configurations
+resource "aws_launch_configuration" "web" {
+  name            = "WebServer-Highly-Available"
+  image_id        = data.aws_ami.ami_name.image_id
+  instance_type   = "t2.micro"
+  security_groups = [aws_security_group.my_webserver.id]
+  user_data       = file("user_data.txt")
 
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Create Auto Scaling Group and attache it to Launch Conf. and multy VPC Zones
+resource "aws_autoscaling_group" "web" {
+  name                 = "WebServer-Highly-Available-ASG"
+  launch_configuration = aws_launch_configuration.web.name
+  min_size             = 2
+  max_size             = 2
+  min_elb_capacity     = 2
+  health_check_type    = "ELB"
+  load_balancers       = [aws_elb.web.name]
+  vpc_zone_identifier  = [aws_default_subnet.default_az1.id, aws_default_subnet.default_az2.id]
+
+  dynamic "tag" {
+    for_each = {
+      Name  = "WebServer in ASG"
+      Owner = "Andy Shulga"
+    }
+    content {
+      key                 = tag.key
+      value               = tag.value
+      propagate_at_launch = true
+    }
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Create Elastic Load Balancer
+resource "aws_elb" "web" {
+  name               = "WebServerAndyCV-HA-ELB"
+  availability_zones = [data.aws_availability_zones.available.names[0], data.aws_availability_zones.available.names[1]]
+  security_groups    = [aws_security_group.my_webserver.id]
+  listener {
+    lb_port           = 80
+    lb_protocol       = "http"
+    instance_port     = 80
+    instance_protocol = "http"
+  }
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    target              = "HTTP:80/"
+    interval            = 10
+  }
+  tags = {
+    Name = "WebServer-HA-ELB"
+  }
+}
+
+# Creat an EC2 without any automations. With auto assigning AMI
 resource "aws_instance" "my_ec2" {
+  count = 2
   ami                    = data.aws_ami.ami_name.image_id
   instance_type          = "t2.micro"
   user_data              = file("user_data.txt")
   vpc_security_group_ids = [aws_security_group.my_webserver.id]
+  
+  
 
   tags = {
-    Name = "Andy EC2"
+    Name    = "Web Server Build by Terraform ${count.index}"
+    Owner   = "Andy Shulga"
+    Content = "Andy CV from S3 Static"
+  }
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
+# Create Elastic IP address 
 resource "aws_eip" "my_eip" {
-  instance = aws_instance.my_ec2.id
+  count = 2
   vpc      = true
 }
 
+resource "aws_eip_association" "eip_to_ec2" {
+  count = 2
+  instance_id = aws_instance.my_ec2[count.index].id 
+  allocation_id = aws_eip.my_eip[count.index].id 
+}
+
+
+#Create a Security Groupe with ports by Dynamic block
 resource "aws_security_group" "my_webserver" {
   name = "Dynamic Security Group"
 
@@ -42,5 +123,18 @@ resource "aws_security_group" "my_webserver" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = {
+    Name  = "Dynamic SecurityGroup"
+    Owner = "Andy Shulga"
+  }
 }
 
+# Create a resource to get my Availabilyty Zones
+resource "aws_default_subnet" "default_az1" {
+  availability_zone = data.aws_availability_zones.available.names[0]
+}
+
+resource "aws_default_subnet" "default_az2" {
+  availability_zone = data.aws_availability_zones.available.names[1]
+}
