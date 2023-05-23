@@ -9,6 +9,6 @@ variable "region" {
 }
 
 variable "ec2_count" {
-  type = number
+  type    = number
   default = 2
 }

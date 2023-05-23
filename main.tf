@@ -73,13 +73,13 @@ resource "aws_elb" "web" {
 
 # Creat an EC2 without any automations. With auto assigning AMI
 resource "aws_instance" "my_ec2" {
-  count = 2
+  count                  = 2
   ami                    = data.aws_ami.ami_name.image_id
   instance_type          = "t2.micro"
   user_data              = file("user_data.txt")
   vpc_security_group_ids = [aws_security_group.my_webserver.id]
-  
-  
+
+
 
   tags = {
     Name    = "Web Server Build by Terraform ${count.index}"
@@ -94,13 +94,13 @@ resource "aws_instance" "my_ec2" {
 # Create Elastic IP address 
 resource "aws_eip" "my_eip" {
   count = 2
-  vpc      = true
+  vpc   = true
 }
 
 resource "aws_eip_association" "eip_to_ec2" {
-  count = 2
-  instance_id = aws_instance.my_ec2[count.index].id 
-  allocation_id = aws_eip.my_eip[count.index].id 
+  count         = 2
+  instance_id   = aws_instance.my_ec2[count.index].id
+  allocation_id = aws_eip.my_eip[count.index].id
 }
 
 
@@ -137,4 +137,38 @@ resource "aws_default_subnet" "default_az1" {
 
 resource "aws_default_subnet" "default_az2" {
   availability_zone = data.aws_availability_zones.available.names[1]
+}
+
+#--------------------------------------------------------------------------
+# S3 section
+
+resource "aws_instance" "web_s3" {
+  ami                  = "ami-06a0cd9728546d178"
+  instance_type        = "t2.micro"
+  iam_instance_profile = aws_iam_instance_profile.test_profile.name
+  user_data            = file("user_data_s3.txt")
+
+  tags = {
+    Name = "Web using S3"
+  }
+}
+
+
+resource "aws_iam_instance_profile" "test_profile" {
+  name = "example-profile" # Replace with your desired profile name
+
+  role = aws_iam_role.s3_ec2_role.name
+}
+
+
+resource "aws_db_instance" "my_db" {
+  allocated_storage    = 10
+  db_name              = "mydb"
+  engine               = "mysql"
+  engine_version       = "5.7"
+  instance_class       = "db.t3.micro"
+  username             = "foo"
+  password             = "foobarbaz"
+  parameter_group_name = "default.mysql5.7"
+  skip_final_snapshot  = true
 }
