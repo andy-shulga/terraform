@@ -6,7 +6,7 @@
 ####################################
 
 resource "aws_iam_role" "s3_ec2_role" {
-  name = "AWSS3ReadAndRight"
+  name = "AWSS3ReadAndRightRole"
 
   assume_role_policy = <<EOF
 {

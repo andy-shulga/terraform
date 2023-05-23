@@ -4,13 +4,6 @@
 #
 ####################################
 
-/*
-# Get Public IP to the EC2 (not autoscaling)
-output "public_ip" {
-  value = aws_eip.my_eip.public_ip
-}
-*/
-
 # Get current Region Name to get then AZ names
 output "current_region" {
   value = data.aws_region.current.name
